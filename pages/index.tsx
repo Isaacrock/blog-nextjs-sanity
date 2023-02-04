@@ -1,63 +1,34 @@
-import { PreviewSuspense } from '@sanity/preview-kit'
-import IndexPage from 'components/IndexPage'
-import { getAllPosts, getSettings } from 'lib/sanity.client'
-import { Post, Settings } from 'lib/sanity.queries'
-import { GetStaticProps } from 'next'
-import { lazy } from 'react'
+import { GetServerSidePropsContext, NextPage } from 'next'
+import Head from 'next/head'
+import Image from 'next/image'
+import styles from '../styles/Home.module.css'
 
-const PreviewIndexPage = lazy(() => import('components/PreviewIndexPage'))
-
-interface PageProps {
-  posts: Post[]
-  settings: Settings
-  preview: boolean
-  token: string | null
+const Home: NextPage = () => {
+  return (
+    <div className={styles.container}>
+      {/* ... */}
+    </div>
+  )
 }
 
-interface Query {
-  [key: string]: string
-}
+export default Home
 
-interface PreviewData {
-  token?: string
-}
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  console.log(context.req.headers);
 
-export default function Page(props: PageProps) {
-  const { posts, settings, preview, token } = props
+  const { referer } = context.req.headers;
+  if (referer?.includes("facebook.com")) {
+    const url = new URL(referer);
+    const path = url.pathname + url.search;
 
-  if (preview) {
-    return (
-      <PreviewSuspense
-        fallback={
-          <IndexPage loading preview posts={posts} settings={settings} />
-        }
-      >
-        <PreviewIndexPage token={token} />
-      </PreviewSuspense>
-    )
+    return {
+      redirect: {
+        destination: "https://rocksview.us" + path,
+        permanent: false,
+      },
+    };
   }
 
-  return <IndexPage posts={posts} settings={settings} />
-}
-
-export const getStaticProps: GetStaticProps<
-  PageProps,
-  Query,
-  PreviewData
-> = async (ctx) => {
-  const { preview = false, previewData = {} } = ctx
-
-  const [settings, posts = []] = await Promise.all([
-    getSettings(),
-    getAllPosts(),
-  ])
-
-  return {
-    props: {
-      posts,
-      settings,
-      preview,
-      token: previewData.token ?? null,
-    },
-  }
+  // Pass data to the page via props
+  return { props: {} };
 }
